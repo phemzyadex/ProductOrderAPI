@@ -46,17 +46,18 @@ ProductOrderAPI
 ├── Infrastructure      # EF Core, Repositories, Security, Services
 │   ├── Persistence     # AppDbContext, Migrations, Seed data
 │   └── Security        # JWT & Password Hashing
-├── Shared				# Middleware	
-└── API                 # Controllers, Endpoints
-
+├── Shared				          # Middleware	
+├── API                 # Controllers, Endpoints
+└── Test                # xUnit
 
 Tech Stack
 
-* .NET 8 / ASP.NET Core Web API
+* .NET 9 / ASP.NET Core Web API
 * Entity Framework Core (SQL Server)
 * JWT Authentication
 * BCrypt.Net for password hashing
 * Clean Architecture principles
+* xUnit
 
 
 Authentication
@@ -105,7 +106,7 @@ Setup & Installation
 1. Clone repository
 
    ```bash
-   git clone https://github.com/your-repo/ProductOrderAPI.git
+   git clone https://github.com/phemzyadex/ProductOrderAPI
    cd ProductOrderAPI
    ```
 
@@ -114,12 +115,12 @@ Setup & Installation
 
    ```json
    "ConnectionStrings": {
-     "DefaultConnection": "Server=.;Database=ProductOrderDb;Trusted_Connection=True;TrustServerCertificate=True;"
+     "DefaultConnection": "Server=.;Database=ProductOrderDB;User Id=sa;Password=*****;Encrypt=True;TrustServerCertificate=True;MultipleActiveResultSets=True;Pooling=True;Max Pool Size=100;""
    },
    "Jwt": {
      "Key": "super-secret-key-12345",
-     "Issuer": "your-app",
-     "Audience": "your-app-users"
+     "Issuer": "ProductOrderAPI",
+     "Audience": "ProductOrderAPIClients"
    }
    ```
 
@@ -145,11 +146,11 @@ API Endpoints
 
 * `POST /api/auth/register` → Register new user
 * `POST /api/auth/login` → Login and get JWT
-* `GOT /api/auth` → V
+* `GOT /api/auth` → View Users
 
 2. Products
 
-* `GET /api/products` → List all products
+* `GET /api/products` →   all products
 * `GET /api/products/{id}` → View product details
 * `POST /api/products` → Add product (Admin only)
 * `PUT /api/products/{id}` → Update product
