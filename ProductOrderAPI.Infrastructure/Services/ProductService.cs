@@ -32,6 +32,10 @@ namespace ProductOrderAPI.Infrastructure.Services
             _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.Name) ?? "system";
         public async Task<ProductDto> CreateAsync(ProductRequestDto dto)
         {
+            // Validate quantity
+            if (dto.StockQuantity <= 0)
+                throw new ArgumentException("Stock quantity must be greater than zero.");
+
             // Check duplicate by Name (you can expand this to Name + Description if needed)
             var exists = await _db.Products
                 .AnyAsync(p => p.Name.ToLower() == dto.Name.ToLower());
