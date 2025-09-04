@@ -33,6 +33,13 @@ namespace ProductOrderAPI.Infrastructure.Services
 
         public async Task<ProductDto> CreateAsync(ProductDto dto)
         {
+            // Check duplicate by Name (you can expand this to Name + Description if needed)
+            var exists = await _db.Products
+                .AnyAsync(p => p.Name.ToLower() == dto.Name.ToLower());
+
+            if (exists)
+                throw new InvalidOperationException($"A product with name '{dto.Name}' already exists.");
+
             var product = new Product
             {
                 Id = Guid.NewGuid(),
@@ -61,6 +68,15 @@ namespace ProductOrderAPI.Infrastructure.Services
             // Concurrency check
             if (!dto.RowVersion.SequenceEqual(product.RowVersion))
                 throw new DbUpdateConcurrencyException("The product has been modified by another user.");
+
+
+            // Check for duplicates (exclude current product itself)
+            var exists = await _db.Products
+                .AnyAsync(p => p.Id != id && p.Name.ToLower() == dto.Name.ToLower());
+
+            if (exists)
+                throw new InvalidOperationException($"A product with name '{dto.Name}' already exists.");
+
 
             product.Name = dto.Name;
             product.Description = dto.Description;
