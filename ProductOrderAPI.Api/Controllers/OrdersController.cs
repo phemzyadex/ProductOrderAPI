@@ -26,21 +26,15 @@ public class OrderController : ControllerBase
     {
         var user = await GetCurrentUserAsync();
         if (user == null)
-            return Unauthorized(ApiResponse<string>.Fail(null, "User does not exist"));
-
-        //var order = new Order
-        //{
-        //    Id = Guid.NewGuid(),
-        //    Items = request.Items.Select(i => new OrderItem
-        //    {
-        //        ProductId = i.ProductId,
-        //        Quantity = i.Quantity
-        //    }).ToList()
-        //};
+            return Unauthorized(ApiResponse<string>.Fail(null, "User does not exist."));
 
         var result = await _service.PlaceOrderAsync(request, user.Id);
 
-        return Ok(ApiResponse<object>.Ok(new { OrderId = result.Id }, "Order created successfully"));
+        if (!result.Success)
+            return BadRequest(result);
+
+        // return only OrderId + message instead of full Order
+        return Ok(ApiResponse<object>.Ok(new { result.Data!.Id }, "Order created successfully."));
     }
 
     [HttpGet("{id:guid}")]
@@ -52,7 +46,7 @@ public class OrderController : ControllerBase
             .FirstOrDefaultAsync(o => o.Id == id);
 
         if (order == null)
-            return NotFound(ApiResponse<string>.Fail(null, "Order not found"));
+            return NotFound(ApiResponse<string>.Fail(null, "Order not found."));
 
         if (!await CanAccessOrderAsync(order))
             return Forbid();
@@ -93,7 +87,10 @@ public class OrderController : ControllerBase
         ordersQuery = ordersQuery.OrderByDescending(o => o.OrderDate);
 
         var totalOrders = await ordersQuery.CountAsync();
-        var orders = await ordersQuery.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        var orders = await ordersQuery
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
 
         var ordersDto = orders.Select(MapToDto).ToList();
 

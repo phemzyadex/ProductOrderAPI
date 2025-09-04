@@ -36,6 +36,10 @@ namespace ProductOrderAPI.Infrastructure.Services
             if (dto.StockQuantity <= 0)
                 throw new ArgumentException("Stock quantity must be greater than zero.");
 
+            if (dto.Price <= 0)
+                throw new ArgumentException("Price must be greater than zero.");
+
+
             // Check duplicate by Name (you can expand this to Name + Description if needed)
             var exists = await _db.Products
                 .AnyAsync(p => p.Name.ToLower() == dto.Name.ToLower());

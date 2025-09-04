@@ -16,46 +16,66 @@ public class OrderService : IOrderService
         _logger = logger;
         _auditService = auditService;
     }
-
-    public async Task<Order> PlaceOrderAsync(CreateOrderRequest request, Guid userId)
+    public async Task<ApiResponse<Order>> PlaceOrderAsync(CreateOrderRequest request, Guid userId)
     {
+        if (request.Items == null || !request.Items.Any())
+            return ApiResponse<Order>.Fail(null, "Order must contain at least one item.");
+
         var order = new Order
         {
             Id = Guid.NewGuid(),
             UserId = userId,
             OrderDate = DateTime.UtcNow,
-            Items = request.Items.Select(i => new OrderItem
-            {
-                Id = Guid.NewGuid(),
-                ProductId = i.ProductId, 
-                Quantity = i.Quantity
-            }).ToList()
+            Items = new List<OrderItem>()
         };
 
         await using var transaction = await _db.Database.BeginTransactionAsync();
 
-        foreach (var item in order.Items)
+        try
         {
-            var product = await _db.Products.FindAsync(item.ProductId);
-            if (product == null)
-                throw new KeyNotFoundException($"Product {item.ProductId} not found.");
+            foreach (var item in request.Items)
+            {
+                if (item.Quantity <= 0)
+                    return ApiResponse<Order>.Fail(null, $"Invalid quantity for product {item.ProductId}.");
 
-            if (product.StockQuantity < item.Quantity)
-                throw new InvalidOperationException($"Not enough stock for product {product.Name}");
+                
+                var product = await _db.Products.FindAsync(item.ProductId);
+                if (product == null)
+                    return ApiResponse<Order>.Fail(null, $"Product {item.ProductId} not found.");
 
-            product.StockQuantity -= item.Quantity;
-            _db.Products.Update(product);
+                if (product.StockQuantity < item.Quantity)
+                    return ApiResponse<Order>.Fail(null, $"Not enough stock for product {product.Name}.");
 
-            item.Price = product.Price;
+                // Deduct stock
+                product.StockQuantity -= item.Quantity;
+                _db.Products.Update(product);
+
+                order.Items.Add(new OrderItem
+                {
+                    Id = Guid.NewGuid(),
+                    ProductId = product.Id,
+                    Quantity = item.Quantity,
+                    Price = product.Price
+                });
+            }
+
+            _db.Orders.Add(order);
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            await _auditService.LogEventAsync("OrderPlaced", userId.ToString(),
+                $"Order {order.Id} placed with {order.Items.Count} items");
+
+            _logger.LogInformation("Order {OrderId} placed successfully by User {UserId}", order.Id, userId);
+
+            return ApiResponse<Order>.Ok(order, "Order created successfully.");
         }
-
-        _db.Orders.Add(order);
-        await _db.SaveChangesAsync();
-        await transaction.CommitAsync();
-
-        await _auditService.LogEventAsync("OrderPlaced", userId.ToString(),
-            $"Order {order.Id} placed with {order.Items.Count} items");
-
-        return order;
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Error placing order for User {UserId}", userId);
+            return ApiResponse<Order>.Fail(null, "An error occurred while placing the order.");
+        }
     }
+
 }
