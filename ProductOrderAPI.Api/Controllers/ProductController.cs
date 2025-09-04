@@ -31,7 +31,7 @@ namespace ProductOrderAPI.Api.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Create([FromBody] ProductDto dto)
+        public async Task<IActionResult> Create([FromBody] ProductRequestDto dto)
         {
             var created = await _service.CreateAsync(dto);
             return Ok(ApiResponse<ProductDto>.Ok(created, "Product created successfully"));

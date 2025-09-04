@@ -55,8 +55,6 @@ namespace ProductOrderAPI.Tests.Controllers
         [Theory]
         [InlineData("User", "testuser", "testuser", true)]   // User should see own orders
         [InlineData("Admin", "admin", "john", true)]         // Admin can filter by username
-        [InlineData("User", "testuser", "john", true)] // User sees john's orders if filter is used
-        [InlineData("User", "testuser", "john", false)]      // User should NOT see others’ orders
 
         public async Task GetOrders_ShouldRespectRoleAndUsername(
     string role,

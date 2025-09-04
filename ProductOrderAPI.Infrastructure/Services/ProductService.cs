@@ -30,8 +30,7 @@ namespace ProductOrderAPI.Infrastructure.Services
 
         private string GetCurrentUsername() =>
             _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.Name) ?? "system";
-
-        public async Task<ProductDto> CreateAsync(ProductDto dto)
+        public async Task<ProductDto> CreateAsync(ProductRequestDto dto)
         {
             var product = new Product
             {
@@ -76,7 +75,6 @@ namespace ProductOrderAPI.Infrastructure.Services
 
             return ToDto(product);
         }
-
         public async Task DeleteAsync(Guid id)
         {
             var product = await _db.Products.FindAsync(id);

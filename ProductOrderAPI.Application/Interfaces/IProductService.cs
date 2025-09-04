@@ -4,7 +4,7 @@ namespace ProductOrderAPI.Application.Interfaces
 {
     public interface IProductService
     {
-        Task<ProductDto> CreateAsync(ProductDto dto);
+        Task<ProductDto> CreateAsync(ProductRequestDto dto);
         Task<ProductDto> UpdateAsync(Guid id, ProductDto dto);
         Task DeleteAsync(Guid id);
         Task<IEnumerable<ProductDto>> GetAllAsync();
