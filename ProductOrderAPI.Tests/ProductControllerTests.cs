@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Azure;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using ProductOrderAPI.Api.Controllers;
@@ -42,32 +43,68 @@ namespace ProductOrderAPI.Tests.Controllers
         [Fact]
         public async Task GetAll_ShouldReturnOkWithProducts()
         {
-            var products = new List<ProductDto> { new ProductDto { Id = Guid.NewGuid(), Name = "Laptop" } };
-            _mockService.Setup(s => s.GetAllAsync()).ReturnsAsync(products);
+            // Arrange
+            var products = new List<ProductRequestDto>
+    {
+        new ProductRequestDto { Name = "Laptop" }
+    };
+
+            var expectedResponse = new ApiResponse<IEnumerable<ProductRequestDto>>(
+                true,
+                products,
+                "Products retrieved successfully"
+            );
+
+            _mockService
+                .Setup(s => s.GetAllAsync());
+                //.ReturnsAsync(expectedResponse);
 
             var controller = CreateController(_mockService);
 
+            // Act
             var result = await controller.GetAll();
 
+            // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var response = Assert.IsType<ApiResponse<IEnumerable<ProductDto>>>(okResult.Value);
-            Assert.Single(response.Data);
+            var response = Assert.IsType<ApiResponse<IEnumerable<ProductRequestDto>>>(okResult.Value);
+            var createdProduct = Assert.Single(response.Data);
+            Assert.Equal("Laptop", createdProduct.Name);
         }
+
+
+
 
         [Fact]
         public async Task Create_ShouldReturnOk_WhenAdmin()
         {
-            var product = new ProductDto { Id = Guid.NewGuid(), Name = "Tablet" };
-            _mockService.Setup(s => s.CreateAsync(product)).ReturnsAsync(product);
+            // Arrange
+            var product = new ProductRequestDto { Name = "Tablet" };
+
+            var expectedResponse = new ApiResponse<ProductRequestDto>(
+                true,
+                product,
+                "Product created"
+            );
+
+            _mockService
+                .Setup(s => s.CreateAsync(It.IsAny<ProductRequestDto>()));
+                //.ReturnsAsync(expectedResponse);
 
             var controller = CreateController(_mockService, "Admin");
 
+            // Act
             var result = await controller.Create(product);
 
+            // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
             var response = Assert.IsType<ApiResponse<ProductDto>>(okResult.Value);
+            //var createdProduct = Assert.Single(response.Data);
             Assert.Equal("Tablet", response.Data.Name);
+
+            
         }
+
+
 
         [Fact]
         public async Task Update_ShouldReturnBadRequest_WhenIdMismatch()
@@ -96,7 +133,7 @@ namespace ProductOrderAPI.Tests.Controllers
             var response = Assert.IsType<ApiResponse<string>>(badRequest.Value);
 
             Assert.False(response.Success);
-            Assert.Equal(null, response.Message);
+            Assert.Equal("Quantity must be greater than zero", response.Message);
         }
 
 

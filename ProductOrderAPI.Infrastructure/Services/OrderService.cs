@@ -19,7 +19,7 @@ public class OrderService : IOrderService
     public async Task<ApiResponse<Order>> PlaceOrderAsync(CreateOrderRequest request, Guid userId)
     {
         if (request.Items == null || !request.Items.Any())
-            return ApiResponse<Order>.Fail(null, "Order must contain at least one item.");
+            return ApiResponse<Order>.Fail("Order must contain at least one item.", "false");
 
         var order = new Order
         {
@@ -36,15 +36,15 @@ public class OrderService : IOrderService
             foreach (var item in request.Items)
             {
                 if (item.Quantity <= 0)
-                    return ApiResponse<Order>.Fail(null, $"Invalid quantity for product {item.ProductId}.");
+                    return ApiResponse<Order>.Fail( $"Invalid quantity for product {item.ProductId}.", "false");
 
                 
                 var product = await _db.Products.FindAsync(item.ProductId);
                 if (product == null)
-                    return ApiResponse<Order>.Fail(null, $"Product {item.ProductId} not found.");
+                    return ApiResponse<Order>.Fail($"Product {item.ProductId} not found.", "false");
 
                 if (product.StockQuantity < item.Quantity)
-                    return ApiResponse<Order>.Fail(null, $"Not enough stock for product {product.Name}.");
+                    return ApiResponse<Order>.Fail($"Not enough stock for product {product.Name}.", "false");
 
                 // Deduct stock
                 product.StockQuantity -= item.Quantity;
@@ -74,7 +74,7 @@ public class OrderService : IOrderService
         {
             await transaction.RollbackAsync();
             _logger.LogError(ex, "Error placing order for User {UserId}", userId);
-            return ApiResponse<Order>.Fail(null, "An error occurred while placing the order.");
+            return ApiResponse<Order>.Fail( "An error occurred while placing the order.", "false");
         }
     }
 

@@ -97,24 +97,63 @@ namespace ProductOrderAPI.Tests.Controllers
         [Fact]
         public async Task PlaceOrder_ShouldReturnOk_WhenUserExists()
         {
-            using var db = new AppDbContext(_dbOptions);
-            var user = new User { Id = Guid.NewGuid(), Username = "testuser", PasswordHash = "hash", Role = "User" };
+            // Setup in-memory EF Core
+            var options = new DbContextOptionsBuilder<AppDbContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .Options;
+
+            using var db = new AppDbContext(options);
+
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                Username = "testuser",
+                PasswordHash = "hash",
+                Role = "User"
+            };
             db.Users.Add(user);
             db.SaveChanges();
 
             var mockService = new Mock<IOrderService>();
             var fakeOrder = new Order { Id = Guid.NewGuid(), UserId = user.Id };
-            mockService.Setup(s => s.PlaceOrderAsync(It.IsAny<CreateOrderRequest>(), user.Id))
-                       .ReturnsAsync(fakeOrder);
 
-            var controller = CreateController(db, mockService);
-            var request = new CreateOrderRequest { Items = new List<OrderItemRequest> { new(Guid.NewGuid(), 1) } };
+            var expectedResponse = new ApiResponse<Order>(
+                true,
+                fakeOrder,
+                "Order placed successfully"
+            );
+
+            mockService
+                .Setup(s => s.PlaceOrderAsync(It.IsAny<CreateOrderRequest>(), It.IsAny<Guid>()))
+                .ReturnsAsync(expectedResponse);
+
+            var controller = new OrderController(mockService.Object, db);
+
+            // Mock authenticated user
+            controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity(new[]
+                    {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.Role, user.Role)
+            }, "mock"))
+                }
+            };
+
+            var request = new CreateOrderRequest
+            {
+                Items = new List<OrderItemRequest> { new(Guid.NewGuid(), 1) }
+            };
 
             var result = await controller.PlaceOrder(request);
 
             var okResult = Assert.IsType<OkObjectResult>(result);
             Assert.Equal(200, okResult.StatusCode);
         }
+
 
         [Fact]
         public async Task PlaceOrder_ShouldReturnUnauthorized_WhenUserNotFound()

@@ -46,7 +46,7 @@ namespace ProductOrderAPI.Shared.Middleware
                 _ => (int)HttpStatusCode.InternalServerError
             };
 
-            var response = ApiResponse<string>.Fail(null, ex.Message);
+            var response = ApiResponse<string>.Fail( ex.Message, "false");
 
             await context.Response.WriteAsync(JsonSerializer.Serialize(response));
         }

@@ -55,7 +55,7 @@ namespace ProductOrderAPI.Tests
 
             var service = new ProductService(db, logger, auditMock.Object, httpAccessor);
 
-            var dto = new ProductDto
+            var dto = new ProductRequestDto
             {
                 Name = "Laptop",
                 Description = "High-end gaming laptop",

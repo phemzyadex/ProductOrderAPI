@@ -42,7 +42,7 @@ namespace ProductOrderAPI.Api.Controllers
         public async Task<IActionResult> Update(Guid id, [FromBody] ProductDto dto)
         {
             if (id != dto.Id)
-                return BadRequest(ApiResponse<string>.Fail(null, "Mismatched product ID"));
+                return BadRequest(ApiResponse<string>.Fail( "Mismatched product ID", "false"));
 
             var updated = await _service.UpdateAsync(id, dto);
             return Ok(ApiResponse<ProductDto>.Ok(updated, "Product updated successfully"));
@@ -61,7 +61,7 @@ namespace ProductOrderAPI.Api.Controllers
         public async Task<IActionResult> AddStock(Guid id, [FromQuery] int quantity)
         {
             if (quantity <= 0)
-                return BadRequest(ApiResponse<string>.Fail(null, "Quantity must be greater than zero"));
+                return BadRequest(ApiResponse<string>.Fail("Quantity must be greater than zero", "false"));
 
             var updated = await _service.AddStockAsync(id, quantity);
             return Ok(ApiResponse<ProductDto>.Ok(updated, "Stock added successfully"));

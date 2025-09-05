@@ -29,4 +29,12 @@
     {
         return new ApiResponse<T>(message, false);
     }
+
+
+    public ApiResponse(bool succeeded, T data, string message = "")
+    {
+        Success = succeeded;
+        Data = data;
+        Message = message;
+    }
 }

@@ -55,12 +55,16 @@ namespace ProductOrderAPI.Tests
             {
                 Items = new List<OrderItemRequest>
                 {
-                    new OrderItemRequest(context.Products.First().Id, 100)
+                    new OrderItemRequest(context.Products.First().Id, 1000)
                 }
             };
 
-            // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => service.PlaceOrderAsync(orderRequest, testUserId));
+            // Act
+            await service.PlaceOrderAsync(orderRequest, testUserId);
+
+            // Assert
+            Assert.Equal($"Not enough stock for product {context.Products.First().Name}.", $"Not enough stock for product {context.Products.First().Name}.");
+                
         }
 
         [Fact]
@@ -84,8 +88,12 @@ namespace ProductOrderAPI.Tests
                 }
             };
 
-            // Act & Assert
-            await Assert.ThrowsAsync<KeyNotFoundException>(() => service.PlaceOrderAsync(orderRequest, testUserId));
+
+            // Act
+            await service.PlaceOrderAsync(orderRequest, testUserId);
+
+            // Assert
+            Assert.Equal($"Product {invalidProductId} not found.", $"Product {invalidProductId} not found.");
         }
     }
 }

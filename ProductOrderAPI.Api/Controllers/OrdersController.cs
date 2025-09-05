@@ -26,7 +26,7 @@ public class OrderController : ControllerBase
     {
         var user = await GetCurrentUserAsync();
         if (user == null)
-            return Unauthorized(ApiResponse<string>.Fail(null, "User does not exist."));
+            return Unauthorized(ApiResponse<string>.Fail("User does not exist.", "false"));
 
         var result = await _service.PlaceOrderAsync(request, user.Id);
 
@@ -46,7 +46,7 @@ public class OrderController : ControllerBase
             .FirstOrDefaultAsync(o => o.Id == id);
 
         if (order == null)
-            return NotFound(ApiResponse<string>.Fail(null, "Order not found."));
+            return NotFound(ApiResponse<string>.Fail("Order not found.", "false"));
 
         if (!await CanAccessOrderAsync(order))
             return Forbid();
